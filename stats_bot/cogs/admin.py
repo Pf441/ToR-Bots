@@ -71,6 +71,26 @@ class Administration(commands.Cog, command_attrs={"hidden": True}):
             "&scope=bot&permissions=8\n"
             f"====================="
         )
+        
+    @commands.Cog.listener()
+    async def on_user_update(self, before, after):
+        newUserChannel = self.bot.get_channel("629371714203156501")
+        if not after.username.startswith("/u/"):
+            if after.username.startswith("u/"):
+                await self.bot.send_message(newUserChannel, "Almost. You forgot the '/' at the beginning :-)")
+            else:
+                await self.bot.send_message(newUserChannel, "Your username does not start with '/u/'. You will only be able to talk on this channel until you change your username to '/u/[your Reddit name]'.")
+            role = get(after.server.roles, name="New User")
+            await after.add_roles(role)
+        else:
+            role = get(after.server.roles, name="New User")
+            if role in after.roles: # Check if "New User" role is already granted to the user before trying to remove it
+                await self.bot.send_message(newUserChannel, "You name follows the '/u/[Reddit username]' convention. Welcome to the server!")
+                role = get(after.server.roles, name="New User")
+                await after.remove_roles(role)
+                if after.roles == []: # No other roles, so it must be a brand new user (fallback case if an user has no roles)
+                    role = get(after.server.roles, name="Visitor (0)")
+                    await after.add_roles(role)
 
     @commands.command(hidden=True)
     async def load(self, ctx, extension_name: str):
